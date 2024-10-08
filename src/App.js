@@ -24,8 +24,8 @@ function App() {
 function Host() {
   const [players, setPlayers] = useState([]);
   const [gameStarted, setGameStarted] = useState(false);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [fastestPlayer, setFastestPlayer] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [correctAnswer, setCorrectAnswer] = useState(null);
   const { socket } = useContext(GameContext);
 
   const questions = [
@@ -42,8 +42,8 @@ function Host() {
       setGameStarted(true);
     });
 
-    socket.on('correctAnswer', (playerName) => {
-      setFastestPlayer(playerName);
+    socket.on('correctAnswer', (data) => {
+      setCorrectAnswer(data.playerName);
     });
   }, [socket]);
 
@@ -52,21 +52,23 @@ function Host() {
   };
 
   const nextQuestion = () => {
-    setFastestPlayer(null);
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      socket.emit('nextQuestion');
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+      setCorrectAnswer(null);
     } else {
-      socket.emit('endGame');
+      // Show summary after the last question
+      socket.emit('gameEnd');
     }
   };
+
+  const websiteLink = 'https://kbc-frontend-taupe.vercel.app';
 
   return (
     <div className="host">
       <h2>Welcome to KBC</h2>
       {!gameStarted && (
         <>
-          <QRCodeSVG value={'https://kbc-frontend-taupe.vercel.app'} />
+          <QRCodeSVG value={websiteLink} />
           <button onClick={startGame}>Start Game</button>
         </>
       )}
@@ -74,21 +76,31 @@ function Host() {
         <h3>Players Joined:</h3>
         <ul>
           {players.map((player) => (
-            <li key={player.id}>{player.name} - Score: {player.score}</li>
+            <li key={player.id}>
+              {player.name} {player.answerTime ? ` - Answered in ${player.answerTime} ms` : ''}
+            </li>
           ))}
         </ul>
       </div>
+
       {gameStarted && (
-        <div>
-          {fastestPlayer ? (
-            <div>
-              <h3>Congratulations, {fastestPlayer} answered correctly!</h3>
-              <button onClick={nextQuestion}>Continue</button>
+        <>
+          <div className="question-section">
+            <h2>Question: {questions[currentQuestion].question}</h2>
+            <ul>
+              {questions[currentQuestion].options.map((option) => (
+                <li key={option}>{option}</li>
+              ))}
+            </ul>
+          </div>
+
+          {correctAnswer && (
+            <div className="congrats-section">
+              <h3>Congratulations {correctAnswer}! You answered correctly.</h3>
+              <button onClick={nextQuestion}>Next Question</button>
             </div>
-          ) : (
-            <GamePanel isHost={true} currentQuestionIndex={currentQuestionIndex} questions={questions} />
           )}
-        </div>
+        </>
       )}
     </div>
   );
@@ -98,6 +110,8 @@ function Player() {
   const [name, setName] = useState('');
   const [isRegistered, setIsRegistered] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [selectedOption, setSelectedOption] = useState('');
   const { socket } = useContext(GameContext);
 
   const registerPlayer = () => {
@@ -109,7 +123,16 @@ function Player() {
     socket.on('gameStarted', () => {
       setGameStarted(true);
     });
+
+    socket.on('newQuestion', (question) => {
+      setCurrentQuestion(question);
+    });
   }, [socket]);
+
+  const submitAnswer = () => {
+    const time = Date.now();
+    socket.emit('submitAnswer', { selectedOption, time });
+  };
 
   return (
     <div className="player">
@@ -124,50 +147,29 @@ function Player() {
           />
           <button onClick={registerPlayer}>Submit</button>
         </div>
-      ) : (
-        <div>
-          {gameStarted ? (
-            <GamePanel isHost={false} />
-          ) : (
-            <h3>Waiting for the host to start the game...</h3>
-          )}
+      ) : gameStarted && currentQuestion ? (
+        <div className="game-panel">
+          <h2>{currentQuestion.question}</h2>
+          <ul>
+            {currentQuestion.options.map((option) => (
+              <li key={option}>
+                <label>
+                  <input
+                    type="radio"
+                    name="option"
+                    value={option.charAt(0)}
+                    onChange={() => setSelectedOption(option.charAt(0))}
+                  />
+                  {option}
+                </label>
+              </li>
+            ))}
+          </ul>
+          <button onClick={submitAnswer}>Submit</button>
         </div>
+      ) : (
+        <h3>Waiting for the host to start the game...</h3>
       )}
-    </div>
-  );
-}
-
-function GamePanel({ isHost, currentQuestionIndex, questions }) {
-  const [selectedOption, setSelectedOption] = useState('');
-  const { socket } = useContext(GameContext);
-
-  const submitAnswer = () => {
-    const time = Date.now();
-    socket.emit('submitAnswer', { questionId: currentQuestionIndex, selectedOption, time });
-  };
-
-  return (
-    <div className="game-panel">
-      <h2>{questions[currentQuestionIndex].question}</h2>
-      <ul>
-        {questions[currentQuestionIndex].options.map((option) => (
-          <li key={option}>
-            {!isHost && (
-              <label>
-                <input
-                  type="radio"
-                  name="option"
-                  value={option.charAt(0)}
-                  onChange={() => setSelectedOption(option.charAt(0))}
-                />
-                {option}
-              </label>
-            )}
-            {isHost && <span>{option}</span>}
-          </li>
-        ))}
-      </ul>
-      {!isHost && <button onClick={submitAnswer}>Submit</button>}
     </div>
   );
 }

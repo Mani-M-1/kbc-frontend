@@ -41,7 +41,7 @@ function Host() {
     socket.emit('startGame');
   };
 
-  const websiteLink = 'https://kbc-frontend-cig9pdas5-manim1s-projects.vercel.app';
+  const websiteLink = 'https://kbc-frontend-taupe.vercel.app';
 
   return (
     <div className="host">

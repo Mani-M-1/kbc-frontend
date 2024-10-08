@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useContext, createContext } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCode } from 'qrcode.react';
 import io from 'socket.io-client';
 import './App.css';
 
-// const socket = io('http://localhost:4000');
 const socket = io('https://kbc-backend-9mww.onrender.com');
 const GameContext = createContext();
 
@@ -48,7 +47,7 @@ function Host() {
       <h2>Welcome to KBC</h2>
       {!gameStarted && (
         <>
-          <QRCodeSVG value={websiteLink} />
+          <QRCode value={websiteLink} />
           <button onClick={startGame}>Start Game</button>
         </>
       )}
@@ -56,7 +55,9 @@ function Host() {
         <h3>Players Joined:</h3>
         <ul>
           {players.map((player) => (
-            <li key={player.id}>{player.name}</li>
+            <li key={player.id}>
+              {player.name} {player.answerTime ? ` - Answered in ${player.answerTime} ms` : ''}
+            </li>
           ))}
         </ul>
       </div>
@@ -84,7 +85,7 @@ function Player() {
 
   return (
     <div className="player">
-      {!isRegistered ? (
+      {!isRegistered && !gameStarted ? (
         <div>
           <h2>Register</h2>
           <input
@@ -119,7 +120,8 @@ function GamePanel({ isHost }) {
   ];
 
   const submitAnswer = () => {
-    socket.emit('submitAnswer', { questionId: currentQuestion, selectedOption });
+    const time = Date.now();
+    socket.emit('submitAnswer', { questionId: currentQuestion, selectedOption, time });
   };
 
   const nextQuestion = () => {

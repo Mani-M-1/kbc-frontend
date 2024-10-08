@@ -55,6 +55,7 @@ function Host() {
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setCorrectAnswer(null);
+      socket.emit('newQuestion', questions[currentQuestion + 1]); // Emit the next question to players
     } else {
       // Show summary after the last question
       socket.emit('gameEnd');
@@ -83,24 +84,22 @@ function Host() {
         </ul>
       </div>
 
-      {gameStarted && (
-        <>
-          <div className="question-section">
-            <h2>Question: {questions[currentQuestion].question}</h2>
-            <ul>
-              {questions[currentQuestion].options.map((option) => (
-                <li key={option}>{option}</li>
-              ))}
-            </ul>
-          </div>
+      {gameStarted && correctAnswer === null && (
+        <div className="question-section">
+          <h2>Question: {questions[currentQuestion].question}</h2>
+          <ul>
+            {questions[currentQuestion].options.map((option) => (
+              <li key={option}>{option}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
-          {correctAnswer && (
-            <div className="congrats-section">
-              <h3>Congratulations {correctAnswer}! You answered correctly.</h3>
-              <button onClick={nextQuestion}>Next Question</button>
-            </div>
-          )}
-        </>
+      {correctAnswer && (
+        <div className="congrats-section">
+          <h3>Congratulations {correctAnswer}! You answered correctly.</h3>
+          <button onClick={nextQuestion}>Next Question</button>
+        </div>
       )}
     </div>
   );

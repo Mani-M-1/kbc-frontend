@@ -133,66 +133,77 @@ function GamePanel({ isHost }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedOption, setSelectedOption] = useState('');
   const [showCongrats, setShowCongrats] = useState(false);
+  const [firstResponder, setFirstResponder] = useState(null); // Track who answered first
   const { socket } = useContext(GameContext);
 
   const questions = [
     { question: 'What is the capital of India?', options: ['A: Delhi', 'B: Mumbai', 'C: Kolkata', 'D: Chennai'] },
     { question: 'What is the currency of Japan?', options: ['A: Yen', 'B: Dollar', 'C: Peso', 'D: Won'] },
     { question: 'Who wrote "Macbeth"?', options: ['A: William Shakespeare', 'B: Charles Dickens', 'C: Mark Twain', 'D: George Orwell'] },
-        { question: 'Which planet is closest to the Sun?', options: ['A: Mercury', 'B: Venus', 'C: Earth', 'D: Mars'] },
+    { question: 'Which planet is closest to the Sun?', options: ['A: Mercury', 'B: Venus', 'C: Earth', 'D: Mars'] },
     { question: 'What is the largest mammal in the world?', options: ['A: Blue Whale', 'B: Elephant', 'C: Giraffe', 'D: Great White Shark'] },
     { question: 'What is the chemical symbol for water?', options: ['A: O2', 'B: H2O', 'C: CO2', 'D: H2'] },
   ];
 
   const handleOptionSelect = (option) => {
+    if (isHost) return; // Host should not select options
     setSelectedOption(option);
     // Emit the selected answer to the backend
-    socket.emit('answer', { question: questions[currentQuestion].question, answer: option });
+    socket.emit('submitAnswer', { selectedOption: option, time: Date.now() });
   };
 
-  const handleNextQuestion = () => {
+  const handleContinue = () => {
     setSelectedOption('');
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-    } else {
-      // If it's the last question, emit game completed event
-      socket.emit('gameCompleted');
-    }
+    setShowCongrats(false);
+    socket.emit('nextQuestion'); // Emit event to get the next question
   };
 
   useEffect(() => {
+    // Listen for new question from the server
+    socket.on('newQuestion', (question) => {
+      setCurrentQuestion((prev) => prev + 1);
+      setFirstResponder(null); // Reset first responder
+    });
+
     // Listen for game result from the server
     socket.on('gameResult', (results) => {
-      // Handle game results (e.g., show scores)
-      console.log('Game Results:', results);
+      setFirstResponder(results.firstResponder);
       setShowCongrats(true);
     });
   }, [socket]);
 
   return (
     <div className="game-panel">
-      {showCongrats ? (
+      {showCongrats && firstResponder ? (
         <div className="congratulations">
-          <h2>Congratulations! The game has ended.</h2>
-          <button onClick={() => socket.emit('resetGame')}>Start a New Game</button>
+          <h2>Congratulations! {firstResponder.name} answered first!</h2>
+          <button onClick={handleContinue}>Continue to Next Question</button>
         </div>
       ) : (
         <div>
           <h2>{questions[currentQuestion].question}</h2>
           <ul>
             {questions[currentQuestion].options.map((option) => (
-              <li key={option} onClick={() => handleOptionSelect(option)} className={selectedOption === option ? 'selected' : ''}>
+              <li
+                key={option}
+                onClick={() => handleOptionSelect(option)}
+                className={isHost ? '' : selectedOption === option ? 'selected' : ''}
+                style={isHost ? { cursor: 'default' } : {}}
+              >
                 {option}
               </li>
             ))}
           </ul>
-          <button onClick={handleNextQuestion} disabled={!selectedOption}>
-            {currentQuestion < questions.length - 1 ? 'Next Question' : 'Finish Game'}
-          </button>
+          {!isHost && (
+            <button onClick={handleContinue} disabled={!selectedOption}>
+              Submit
+            </button>
+          )}
         </div>
       )}
     </div>
   );
 }
+
 
 export default App;

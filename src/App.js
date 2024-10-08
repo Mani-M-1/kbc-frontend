@@ -24,14 +24,8 @@ function App() {
 function Host() {
   const [players, setPlayers] = useState([]);
   const [gameStarted, setGameStarted] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [correctAnswer, setCorrectAnswer] = useState(null);
+  const [gameCompleted, setGameCompleted] = useState(false);
   const { socket } = useContext(GameContext);
-
-  const questions = [
-    { question: 'What is the capital of India?', options: ['A: Delhi', 'B: Mumbai', 'C: Kolkata', 'D: Chennai'] },
-    { question: 'What is the currency of Japan?', options: ['A: Yen', 'B: Dollar', 'C: Peso', 'D: Won'] },
-  ];
 
   useEffect(() => {
     socket.on('playersList', (updatedPlayers) => {
@@ -42,8 +36,8 @@ function Host() {
       setGameStarted(true);
     });
 
-    socket.on('correctAnswer', (data) => {
-      setCorrectAnswer(data.playerName);
+    socket.on('gameCompleted', () => {
+      setGameCompleted(true);
     });
   }, [socket]);
 
@@ -51,18 +45,11 @@ function Host() {
     socket.emit('startGame');
   };
 
-  const nextQuestion = () => {
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-      setCorrectAnswer(null);
-      socket.emit('newQuestion', questions[currentQuestion + 1]); // Emit the next question to players
-    } else {
-      // Show summary after the last question
-      socket.emit('gameEnd');
-    }
-  };
-
   const websiteLink = 'https://kbc-frontend-taupe.vercel.app';
+
+  if (gameCompleted) {
+    return <Summary players={players} />;
+  }
 
   return (
     <div className="host">
@@ -83,24 +70,7 @@ function Host() {
           ))}
         </ul>
       </div>
-
-      {gameStarted && correctAnswer === null && (
-        <div className="question-section">
-          <h2>Question: {questions[currentQuestion].question}</h2>
-          <ul>
-            {questions[currentQuestion].options.map((option) => (
-              <li key={option}>{option}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {correctAnswer && (
-        <div className="congrats-section">
-          <h3>Congratulations {correctAnswer}! You answered correctly.</h3>
-          <button onClick={nextQuestion}>Next Question</button>
-        </div>
-      )}
+      {gameStarted && <GamePanel isHost={true} />}
     </div>
   );
 }
@@ -109,8 +79,6 @@ function Player() {
   const [name, setName] = useState('');
   const [isRegistered, setIsRegistered] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState(null);
-  const [selectedOption, setSelectedOption] = useState('');
   const { socket } = useContext(GameContext);
 
   const registerPlayer = () => {
@@ -122,16 +90,7 @@ function Player() {
     socket.on('gameStarted', () => {
       setGameStarted(true);
     });
-
-    socket.on('newQuestion', (question) => {
-      setCurrentQuestion(question);
-    });
   }, [socket]);
-
-  const submitAnswer = () => {
-    const time = Date.now();
-    socket.emit('submitAnswer', { selectedOption, time });
-  };
 
   return (
     <div className="player">
@@ -146,29 +105,97 @@ function Player() {
           />
           <button onClick={registerPlayer}>Submit</button>
         </div>
-      ) : gameStarted && currentQuestion ? (
-        <div className="game-panel">
-          <h2>{currentQuestion.question}</h2>
-          <ul>
-            {currentQuestion.options.map((option) => (
-              <li key={option}>
-                <label>
-                  <input
-                    type="radio"
-                    name="option"
-                    value={option.charAt(0)}
-                    onChange={() => setSelectedOption(option.charAt(0))}
-                  />
-                  {option}
-                </label>
-              </li>
-            ))}
-          </ul>
-          <button onClick={submitAnswer}>Submit</button>
-        </div>
       ) : (
-        <h3>Waiting for the host to start the game...</h3>
+        <div>
+          {gameStarted ? (
+            <GamePanel isHost={false} />
+          ) : (
+            <h3>Waiting for the host to start the game...</h3>
+          )}
+        </div>
       )}
+    </div>
+  );
+}
+
+function GamePanel({ isHost }) {
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [selectedOption, setSelectedOption] = useState('');
+  const [questionComplete, setQuestionComplete] = useState(false);
+  const { socket } = useContext(GameContext);
+
+  const questions = [
+    { question: 'What is the capital of India?', options: ['A: Delhi', 'B: Mumbai', 'C: Kolkata', 'D: Chennai'] },
+    { question: 'What is the currency of Japan?', options: ['A: Yen', 'B: Dollar', 'C: Peso', 'D: Won'] },
+    { question: 'What is the tallest mountain in the world?', options: ['A: K2', 'B: Kilimanjaro', 'C: Everest', 'D: Denali'] },
+    { question: 'Who wrote the play "Hamlet"?', options: ['A: Marlowe', 'B: Shakespeare', 'C: Dickens', 'D: Austen'] },
+    { question: 'Which planet is known as the Red Planet?', options: ['A: Mars', 'B: Venus', 'C: Saturn', 'D: Jupiter'] }
+  ];
+
+  const submitAnswer = () => {
+    const time = Date.now();
+    socket.emit('submitAnswer', { questionId: currentQuestion, selectedOption, time });
+    setQuestionComplete(true);
+  };
+
+  const nextQuestion = () => {
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+      setQuestionComplete(false);
+    } else {
+      socket.emit('endGame');
+    }
+  };
+
+  if (questionComplete && isHost) {
+    return (
+      <div className="congratulations">
+        <h2>Congratulations!</h2>
+        <button onClick={nextQuestion}>
+          {currentQuestion < questions.length - 1 ? 'Next Question' : 'View Summary'}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="game-panel">
+      <h2>{questions[currentQuestion].question}</h2>
+      <ul>
+        {questions[currentQuestion].options.map((option) => (
+          <li key={option}>
+            {!isHost && (
+              <label>
+                <input
+                  type="radio"
+                  name="option"
+                  value={option.charAt(0)}
+                  onChange={() => setSelectedOption(option.charAt(0))}
+                />
+                {option}
+              </label>
+            )}
+            {isHost && <span>{option}</span>}
+          </li>
+        ))}
+      </ul>
+      {!isHost && <button onClick={submitAnswer}>Submit</button>}
+      {isHost && <button onClick={nextQuestion}>Next Question</button>}
+    </div>
+  );
+}
+
+function Summary({ players }) {
+  return (
+    <div className="summary">
+      <h2>Game Over! Summary:</h2>
+      <ul>
+        {players.map((player) => (
+          <li key={player.id}>
+            {player.name} - {player.score} / 5
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -3,7 +3,8 @@ import { QRCodeSVG } from 'qrcode.react';
 import io from 'socket.io-client';
 import './App.css';
 
-const socket = io('http://localhost:4000');
+// const socket = io('http://localhost:4000');
+const socket = io('https://kbc-backend-9mww.onrender.com');
 const GameContext = createContext();
 
 function App() {
@@ -40,7 +41,7 @@ function Host() {
     socket.emit('startGame');
   };
 
-  const websiteLink = 'https://your-vercel-link.com';
+  const websiteLink = 'https://kbc-frontend-cig9pdas5-manim1s-projects.vercel.app';
 
   return (
     <div className="host">

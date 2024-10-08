@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, createContext } from 'react';
-import { QRCode } from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
 import io from 'socket.io-client';
 import './App.css';
 
@@ -47,7 +47,7 @@ function Host() {
       <h2>Welcome to KBC</h2>
       {!gameStarted && (
         <>
-          <QRCode value={websiteLink} />
+          <QRCodeSVG value={websiteLink} />
           <button onClick={startGame}>Start Game</button>
         </>
       )}

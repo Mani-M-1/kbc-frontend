@@ -3,11 +3,11 @@ import { QRCodeSVG } from 'qrcode.react';
 import io from 'socket.io-client';
 import './App.css';
 
-const socket = io('https://kbc-backend-9mww.onrender.com');
+const socket = io('https://kbc-backend-9mww.onrender.com'); // Connect to the backend
 const GameContext = createContext();
 
 function App() {
-  const [isHost, setIsHost] = useState(false);
+  const [isHost, setIsHost] = useState(false);  // Host or Player mode
 
   return (
     <div className="App">
@@ -21,6 +21,7 @@ function App() {
   );
 }
 
+// Host Component
 function Host() {
   const [players, setPlayers] = useState([]);
   const [gameStarted, setGameStarted] = useState(false);
@@ -28,27 +29,30 @@ function Host() {
   const { socket } = useContext(GameContext);
 
   useEffect(() => {
+    // Listen for updated player list from the backend
     socket.on('playersList', (updatedPlayers) => {
       setPlayers(updatedPlayers);
     });
 
+    // Listen for the game start signal from the backend
     socket.on('gameStarted', () => {
       setGameStarted(true);
     });
 
+    // Listen for the game completion signal from the backend
     socket.on('gameCompleted', () => {
       setGameCompleted(true);
     });
   }, [socket]);
 
   const startGame = () => {
-    socket.emit('startGame');
+    socket.emit('startGame');  // Emit event to start the game
   };
 
-  const websiteLink = 'https://kbc-frontend-taupe.vercel.app';
+  const websiteLink = 'https://kbc-frontend-taupe.vercel.app';  // Game link
 
   if (gameCompleted) {
-    return <Summary players={players} />;
+    return <Summary players={players} />;  // Show game summary
   }
 
   return (
@@ -75,6 +79,7 @@ function Host() {
   );
 }
 
+// Player Component
 function Player() {
   const [name, setName] = useState('');
   const [isRegistered, setIsRegistered] = useState(false);
@@ -82,11 +87,12 @@ function Player() {
   const { socket } = useContext(GameContext);
 
   const registerPlayer = () => {
-    socket.emit('register', name);
+    socket.emit('register', name);  // Emit player registration event
     setIsRegistered(true);
   };
 
   useEffect(() => {
+    // Listen for the game start signal from the backend
     socket.on('gameStarted', () => {
       setGameStarted(true);
     });
@@ -118,6 +124,7 @@ function Player() {
   );
 }
 
+// GamePanel Component to display questions and manage answers
 function GamePanel({ isHost }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedOption, setSelectedOption] = useState('');
@@ -134,7 +141,7 @@ function GamePanel({ isHost }) {
 
   const submitAnswer = () => {
     const time = Date.now();
-    socket.emit('submitAnswer', { questionId: currentQuestion, selectedOption, time });
+    socket.emit('submitAnswer', { questionId: currentQuestion, selectedOption, time });  // Submit answer to backend
     setQuestionComplete(true);
   };
 
@@ -143,7 +150,7 @@ function GamePanel({ isHost }) {
       setCurrentQuestion(currentQuestion + 1);
       setQuestionComplete(false);
     } else {
-      socket.emit('endGame');
+      socket.emit('endGame');  // Notify backend when game ends
     }
   };
 
@@ -185,6 +192,7 @@ function GamePanel({ isHost }) {
   );
 }
 
+// Summary component to display player scores
 function Summary({ players }) {
   return (
     <div className="summary">

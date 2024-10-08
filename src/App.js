@@ -129,6 +129,11 @@ function Host() {
     socket.on('correctAnswer', (data) => {
       setCorrectAnswer(data.playerName);
     });
+
+    socket.on('gameEnded', () => {
+    setGameStarted(false);
+    setPlayers([]);
+  });
   }, [socket]);
 
   const startGame = () => {

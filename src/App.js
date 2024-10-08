@@ -8,14 +8,26 @@ const GameContext = createContext();
 
 function App() {
   const [isHost, setIsHost] = useState(false);  // Host or Player mode
+  const [gameCompleted, setGameCompleted] = useState(false); // Track game completion state
+
+  const resetGame = () => {
+    setIsHost(false);
+    setGameCompleted(false);
+  };
 
   return (
     <div className="App">
       <h1>Welcome to Fastest Finger First</h1>
-      <button onClick={() => setIsHost(true)}>Host</button>
-      <button onClick={() => setIsHost(false)}>Player</button>
-      <GameContext.Provider value={{ socket }}>
-        {isHost ? <Host /> : <Player />}
+      {!gameCompleted ? (
+        <>
+          <button onClick={() => setIsHost(true)}>Host</button>
+          <button onClick={() => setIsHost(false)}>Player</button>
+        </>
+      ) : (
+        <button onClick={resetGame}>Home</button>
+      )}
+      <GameContext.Provider value={{ socket, setGameCompleted }}>
+        {!gameCompleted && (isHost ? <Host /> : <Player />)}
       </GameContext.Provider>
     </div>
   );
@@ -25,56 +37,49 @@ function App() {
 function Host() {
   const [players, setPlayers] = useState([]);
   const [gameStarted, setGameStarted] = useState(false);
-  const [gameCompleted, setGameCompleted] = useState(false);
-  const { socket } = useContext(GameContext);
+  const { socket, setGameCompleted } = useContext(GameContext);
 
   useEffect(() => {
-    // Listen for updated player list from the backend
     socket.on('playersList', (updatedPlayers) => {
       setPlayers(updatedPlayers);
     });
 
-    // Listen for the game start signal from the backend
     socket.on('gameStarted', () => {
       setGameStarted(true);
     });
 
-    // Listen for the game completion signal from the backend
-    socket.on('gameCompleted', () => {
+    socket.on('gameCompleted', (players) => {
+      setPlayers(players);
       setGameCompleted(true);
     });
-  }, [socket]);
+  }, [socket, setGameCompleted]);
 
   const startGame = () => {
-    socket.emit('startGame');  // Emit event to start the game
+    socket.emit('startGame'); // Emit event to start the game
   };
 
-  const websiteLink = 'https://kbc-frontend-taupe.vercel.app';  // Game link
-
-  if (gameCompleted) {
-    return <Summary players={players} />;  // Show game summary
-  }
+  const websiteLink = 'https://kbc-frontend-taupe.vercel.app'; // Game link
 
   return (
     <div className="host">
-      <h2>Welcome to KBC</h2>
-      {!gameStarted && (
+      {!gameStarted ? (
         <>
           <QRCodeSVG value={websiteLink} />
           <button onClick={startGame}>Start Game</button>
         </>
+      ) : (
+        <GamePanel isHost={true} />
       )}
       <div className="players-list">
         <h3>Players Joined:</h3>
         <ul>
           {players.map((player) => (
             <li key={player.id}>
-              {player.name} {player.answerTime ? ` - Answered in ${player.answerTime} ms` : ''}
+              {player.name} - {player.score} points
             </li>
           ))}
         </ul>
       </div>
-      {gameStarted && <GamePanel isHost={true} />}
     </div>
   );
 }
@@ -84,19 +89,22 @@ function Player() {
   const [name, setName] = useState('');
   const [isRegistered, setIsRegistered] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
-  const { socket } = useContext(GameContext);
+  const { socket, setGameCompleted } = useContext(GameContext);
 
   const registerPlayer = () => {
-    socket.emit('register', name);  // Emit player registration event
+    socket.emit('register', name);
     setIsRegistered(true);
   };
 
   useEffect(() => {
-    // Listen for the game start signal from the backend
     socket.on('gameStarted', () => {
       setGameStarted(true);
     });
-  }, [socket]);
+
+    socket.on('gameCompleted', () => {
+      setGameCompleted(true);
+    });
+  }, [socket, setGameCompleted]);
 
   return (
     <div className="player">
@@ -113,11 +121,7 @@ function Player() {
         </div>
       ) : (
         <div>
-          {gameStarted ? (
-            <GamePanel isHost={false} />
-          ) : (
-            <h3>Waiting for the host to start the game...</h3>
-          )}
+          {gameStarted ? <GamePanel isHost={false} /> : <h3>Waiting for the host to start the game...</h3>}
         </div>
       )}
     </div>
@@ -128,82 +132,65 @@ function Player() {
 function GamePanel({ isHost }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedOption, setSelectedOption] = useState('');
-  const [questionComplete, setQuestionComplete] = useState(false);
+  const [showCongrats, setShowCongrats] = useState(false);
   const { socket } = useContext(GameContext);
 
   const questions = [
     { question: 'What is the capital of India?', options: ['A: Delhi', 'B: Mumbai', 'C: Kolkata', 'D: Chennai'] },
     { question: 'What is the currency of Japan?', options: ['A: Yen', 'B: Dollar', 'C: Peso', 'D: Won'] },
-    { question: 'What is the tallest mountain in the world?', options: ['A: K2', 'B: Kilimanjaro', 'C: Everest', 'D: Denali'] },
-    { question: 'Who wrote the play "Hamlet"?', options: ['A: Marlowe', 'B: Shakespeare', 'C: Dickens', 'D: Austen'] },
-    { question: 'Which planet is known as the Red Planet?', options: ['A: Mars', 'B: Venus', 'C: Saturn', 'D: Jupiter'] }
+    { question: 'Who wrote "Macbeth"?', options: ['A: William Shakespeare', 'B: Charles Dickens', 'C: Mark Twain', 'D: George Orwell'] },
+        { question: 'Which planet is closest to the Sun?', options: ['A: Mercury', 'B: Venus', 'C: Earth', 'D: Mars'] },
+    { question: 'What is the largest mammal in the world?', options: ['A: Blue Whale', 'B: Elephant', 'C: Giraffe', 'D: Great White Shark'] },
+    { question: 'What is the chemical symbol for water?', options: ['A: O2', 'B: H2O', 'C: CO2', 'D: H2'] },
   ];
 
-  const submitAnswer = () => {
-    const time = Date.now();
-    socket.emit('submitAnswer', { questionId: currentQuestion, selectedOption, time });  // Submit answer to backend
-    setQuestionComplete(true);
+  const handleOptionSelect = (option) => {
+    setSelectedOption(option);
+    // Emit the selected answer to the backend
+    socket.emit('answer', { question: questions[currentQuestion].question, answer: option });
   };
 
-  const nextQuestion = () => {
+  const handleNextQuestion = () => {
+    setSelectedOption('');
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
-      setQuestionComplete(false);
     } else {
-      socket.emit('endGame');  // Notify backend when game ends
+      // If it's the last question, emit game completed event
+      socket.emit('gameCompleted');
     }
   };
 
-  if (questionComplete && isHost) {
-    return (
-      <div className="congratulations">
-        <h2>Congratulations!</h2>
-        <button onClick={nextQuestion}>
-          {currentQuestion < questions.length - 1 ? 'Next Question' : 'View Summary'}
-        </button>
-      </div>
-    );
-  }
+  useEffect(() => {
+    // Listen for game result from the server
+    socket.on('gameResult', (results) => {
+      // Handle game results (e.g., show scores)
+      console.log('Game Results:', results);
+      setShowCongrats(true);
+    });
+  }, [socket]);
 
   return (
     <div className="game-panel">
-      <h2>{questions[currentQuestion].question}</h2>
-      <ul>
-        {questions[currentQuestion].options.map((option) => (
-          <li key={option}>
-            {!isHost && (
-              <label>
-                <input
-                  type="radio"
-                  name="option"
-                  value={option.charAt(0)}
-                  onChange={() => setSelectedOption(option.charAt(0))}
-                />
+      {showCongrats ? (
+        <div className="congratulations">
+          <h2>Congratulations! The game has ended.</h2>
+          <button onClick={() => socket.emit('resetGame')}>Start a New Game</button>
+        </div>
+      ) : (
+        <div>
+          <h2>{questions[currentQuestion].question}</h2>
+          <ul>
+            {questions[currentQuestion].options.map((option) => (
+              <li key={option} onClick={() => handleOptionSelect(option)} className={selectedOption === option ? 'selected' : ''}>
                 {option}
-              </label>
-            )}
-            {isHost && <span>{option}</span>}
-          </li>
-        ))}
-      </ul>
-      {!isHost && <button onClick={submitAnswer}>Submit</button>}
-      {isHost && <button onClick={nextQuestion}>Next Question</button>}
-    </div>
-  );
-}
-
-// Summary component to display player scores
-function Summary({ players }) {
-  return (
-    <div className="summary">
-      <h2>Game Over! Summary:</h2>
-      <ul>
-        {players.map((player) => (
-          <li key={player.id}>
-            {player.name} - {player.score} / 5
-          </li>
-        ))}
-      </ul>
+              </li>
+            ))}
+          </ul>
+          <button onClick={handleNextQuestion} disabled={!selectedOption}>
+            {currentQuestion < questions.length - 1 ? 'Next Question' : 'Finish Game'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -24,7 +24,14 @@ function App() {
 function Host() {
   const [players, setPlayers] = useState([]);
   const [gameStarted, setGameStarted] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [fastestPlayer, setFastestPlayer] = useState(null);
   const { socket } = useContext(GameContext);
+
+  const questions = [
+    { question: 'What is the capital of India?', options: ['A: Delhi', 'B: Mumbai', 'C: Kolkata', 'D: Chennai'] },
+    { question: 'What is the currency of Japan?', options: ['A: Yen', 'B: Dollar', 'C: Peso', 'D: Won'] },
+  ];
 
   useEffect(() => {
     socket.on('playersList', (updatedPlayers) => {
@@ -34,20 +41,32 @@ function Host() {
     socket.on('gameStarted', () => {
       setGameStarted(true);
     });
+
+    socket.on('correctAnswer', (playerName) => {
+      setFastestPlayer(playerName);
+    });
   }, [socket]);
 
   const startGame = () => {
     socket.emit('startGame');
   };
 
-  const websiteLink = 'https://kbc-frontend-taupe.vercel.app';
+  const nextQuestion = () => {
+    setFastestPlayer(null);
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      socket.emit('nextQuestion');
+    } else {
+      socket.emit('endGame');
+    }
+  };
 
   return (
     <div className="host">
       <h2>Welcome to KBC</h2>
       {!gameStarted && (
         <>
-          <QRCodeSVG value={websiteLink} />
+          <QRCodeSVG value={'https://kbc-frontend-taupe.vercel.app'} />
           <button onClick={startGame}>Start Game</button>
         </>
       )}
@@ -55,13 +74,22 @@ function Host() {
         <h3>Players Joined:</h3>
         <ul>
           {players.map((player) => (
-            <li key={player.id}>
-              {player.name} {player.answerTime ? ` - Answered in ${player.answerTime} ms` : ''}
-            </li>
+            <li key={player.id}>{player.name} - Score: {player.score}</li>
           ))}
         </ul>
       </div>
-      {gameStarted && <GamePanel isHost={true} />}
+      {gameStarted && (
+        <div>
+          {fastestPlayer ? (
+            <div>
+              <h3>Congratulations, {fastestPlayer} answered correctly!</h3>
+              <button onClick={nextQuestion}>Continue</button>
+            </div>
+          ) : (
+            <GamePanel isHost={true} currentQuestionIndex={currentQuestionIndex} questions={questions} />
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -109,32 +137,20 @@ function Player() {
   );
 }
 
-function GamePanel({ isHost }) {
-  const [currentQuestion, setCurrentQuestion] = useState(0);
+function GamePanel({ isHost, currentQuestionIndex, questions }) {
   const [selectedOption, setSelectedOption] = useState('');
   const { socket } = useContext(GameContext);
-  const questions = [
-    { question: 'What is the capital of India?', options: ['A: Delhi', 'B: Mumbai', 'C: Kolkata', 'D: Chennai'] },
-    { question: 'What is the currency of Japan?', options: ['A: Yen', 'B: Dollar', 'C: Peso', 'D: Won'] },
-    // Add more questions as needed
-  ];
 
   const submitAnswer = () => {
     const time = Date.now();
-    socket.emit('submitAnswer', { questionId: currentQuestion, selectedOption, time });
-  };
-
-  const nextQuestion = () => {
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-    }
+    socket.emit('submitAnswer', { questionId: currentQuestionIndex, selectedOption, time });
   };
 
   return (
     <div className="game-panel">
-      <h2>{questions[currentQuestion].question}</h2>
+      <h2>{questions[currentQuestionIndex].question}</h2>
       <ul>
-        {questions[currentQuestion].options.map((option) => (
+        {questions[currentQuestionIndex].options.map((option) => (
           <li key={option}>
             {!isHost && (
               <label>
@@ -152,7 +168,6 @@ function GamePanel({ isHost }) {
         ))}
       </ul>
       {!isHost && <button onClick={submitAnswer}>Submit</button>}
-      {isHost && <button onClick={nextQuestion}>Next Question</button>}
     </div>
   );
 }

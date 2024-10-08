@@ -300,12 +300,14 @@ const GameContext = createContext();
 function App() {
   const [isHost, setIsHost] = useState(false);
 
+  const [finalScores, setFinalScores] = useState([]);
+
   return (
     <div className="App">
       <h1>Welcome to Fastest Finger First</h1>
       <button onClick={() => setIsHost(true)}>Host</button>
       <button onClick={() => setIsHost(false)}>Player</button>
-      <GameContext.Provider value={{ socket }}>
+      <GameContext.Provider value={{ socket, finalScores, setFinalScores}}>
         {isHost ? <Host /> : <Player />}
       </GameContext.Provider>
     </div>
@@ -317,7 +319,9 @@ function Host() {
   const [gameStarted, setGameStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [correctAnswer, setCorrectAnswer] = useState(null);
-  const { socket } = useContext(GameContext);
+  
+
+  const { socket, setFinalScores } = useContext(GameContext);
 
   const questions = [
     { question: 'What is the capital of India?', options: ['A: Delhi', 'B: Mumbai', 'C: Kolkata', 'D: Chennai'] },
@@ -339,6 +343,7 @@ function Host() {
 
     socket.on('gameEnded', (finalScores) => {
       console.log("Final Scores:", finalScores);
+      setFinalScores(finalScores);
     });
   }, [socket]);
 
@@ -484,12 +489,14 @@ function Player() {
 }
 
 
-function SummaryPage({ scores }) {
+function SummaryPage() {
+  const { finalScores } = useContext(GameContext);
+
   return (
     <div className="summary-page">
       <h2>Game Summary</h2>
       <ul>
-        {scores.map((player, index) => (
+        {finalScores.map((player, index) => (
           <li key={index}>
             {player.name} - Score: {player.score}
           </li>

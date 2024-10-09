@@ -77,7 +77,7 @@ function Host() {
       {!gameStarted && (
         <>
           <QRCodeSVG value={websiteLink} />
-          <button onClick={startGame}>Start Game</button>
+          <button onClick={startGame} disabled={players.length === 0}>Start Game</button>
         </>
       )}
       <div className="players-list">

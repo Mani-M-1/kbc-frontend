@@ -68,6 +68,7 @@ function Player() {
 
   const quitGame = () => {
     socket.emit('disconnect');
+    setIsRegistered(false);
   }
 
 //   const playerExitedFromGame = () => {

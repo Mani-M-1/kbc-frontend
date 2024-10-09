@@ -51,7 +51,8 @@ function Player() {
     });
 
     return () => {
-        socket.off('removePlayer');
+        socket.off('disconnect');
+        // playerExitedFromGame();
     };
   }, [socket, setPlayerId]);
 
@@ -70,7 +71,7 @@ function Player() {
   }
 
 //   const playerExitedFromGame = () => {
-//     socket.emit('removePlayer');
+//     socket.emit('disconnect');
 //   }
 
   const WrongAnswerView = ({playerName, correctOption}) => {

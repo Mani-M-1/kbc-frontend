@@ -37,6 +37,8 @@ function Host() {
     socket.on('gameEnded', (finalScores) => {
       console.log("Final Scores:", finalScores);
       setFinalScores(finalScores);
+
+      navigate("/players-summary", {replace: true});
     });
   }, [socket]);
 

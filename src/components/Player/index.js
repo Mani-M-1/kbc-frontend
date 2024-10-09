@@ -8,7 +8,7 @@ function Player() {
   const [gameStarted, setGameStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [selectedOption, setSelectedOption] = useState('');
-  const { socket, setIsHost  } = useContext(GameContext);
+  const { socket, setIsHost, setFinalScores } = useContext(GameContext);
 
   const navigate = useNavigate();
 
@@ -28,9 +28,10 @@ function Player() {
     });
 
     socket.on('gameEnded', (finalScores) => {
-      // Navigate to the summary page with final scores
-      alert("Game Ended! Check the summary console log.");
       console.log("Final Scores:", finalScores);
+      setFinalScores(finalScores);
+
+      navigate("/players-summary", {replace: true});
     });
   }, [socket]);
 

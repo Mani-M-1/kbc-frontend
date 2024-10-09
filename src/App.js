@@ -32,7 +32,7 @@ function App() {
           <Route path='/' element={<Home/>}/>
           <Route path='/host' element={<Host/>}/>
           <Route path='/player' element={<Player/>}/>
-          <Route path='/players-summary" ' element={<PlayerSummary/>}/>
+          <Route path='/players-summary' element={<PlayerSummary/>}/>
         </Routes>
       </BrowserRouter>
     </GameContext.Provider>

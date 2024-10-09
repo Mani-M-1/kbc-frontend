@@ -49,9 +49,6 @@ function Host() {
   const endGame = () => {
     // Emit an event to notify the server that the game has ended
     socket.emit('endGame');
-
-    // after ending game navigate to home
-    navigateToHome();
   };
 
   const nextQuestion = () => {

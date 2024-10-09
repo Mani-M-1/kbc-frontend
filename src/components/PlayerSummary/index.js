@@ -8,10 +8,6 @@ function PlayerSummary() {
 
   const navigate = useNavigate();
 
-
-  console.log("players summary page");
-  console.log(finalScores);
-
   const navigateToHome = () => {
     setIsHost(null);
     navigate("/", {replace: true});

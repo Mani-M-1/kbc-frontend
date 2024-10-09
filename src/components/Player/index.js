@@ -11,7 +11,7 @@ function Player() {
   const [wrongAnswer, setWrongAnswer] = useState({playerName: "", show: false, correctOption: ''});
 
 
-  const { socket, setIsHost, setFinalScores } = useContext(GameContext);
+  const { socket, setIsHost, setFinalScores, playerId, setPlayerId } = useContext(GameContext);
 
   const navigate = useNavigate();
 
@@ -22,6 +22,10 @@ function Player() {
   };
 
   useEffect(() => {
+    socket.on('playersList', ({playerId}) => {
+      setPlayerId({playerId});
+    });
+
     socket.on('gameStarted', () => {
       setGameStarted(true);
     });
@@ -119,7 +123,7 @@ function Player() {
           </ul>
           <button onClick={submitAnswer}>Submit</button>
 
-          {wrongAnswer.show && <WrongAnswerView playerName={wrongAnswer.playerName }/>}
+          {wrongAnswer.show && wrongAnswer.playerId === playerId && <WrongAnswerView playerName={wrongAnswer.playerName } correctOption={wrongAnswer.correctOption} />}
         </div>
       ) : (
         <h3>Waiting for the host to start the game...</h3>

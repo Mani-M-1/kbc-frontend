@@ -15,6 +15,7 @@ export const GameContext = createContext();
 
 function App() {
   const [isHost, setIsHost] = useState(null);
+  const [playerId, setPlayerId] = useState(null);
 
   const [finalScores, setFinalScores] = useState([]);
 
@@ -26,7 +27,7 @@ function App() {
   // }
 
   return (
-    <GameContext.Provider value={{ socket, finalScores, setFinalScores, setIsHost, isHost}}>
+    <GameContext.Provider value={{ socket, finalScores, setFinalScores, setIsHost, isHost, playerId, setPlayerId}}>
       <BrowserRouter>
         <Routes>
           <Route path='/' element={<Home/>}/>

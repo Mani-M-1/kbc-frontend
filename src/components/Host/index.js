@@ -22,7 +22,7 @@ function Host() {
   ];
 
   useEffect(() => {
-    socket.on('playersList', (updatedPlayers) => {
+    socket.on('playersList', ({updatedPlayers}) => {
       setPlayers(updatedPlayers);
     });
 

@@ -8,6 +8,9 @@ function Player() {
   const [gameStarted, setGameStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [selectedOption, setSelectedOption] = useState('');
+  const [wrongAnswer, setWrongAnswer] = useState({playerName: "", show: false});
+
+
   const { socket, setIsHost, setFinalScores } = useContext(GameContext);
 
   const navigate = useNavigate();
@@ -25,6 +28,10 @@ function Player() {
 
     socket.on('newQuestion', (question) => {
       setCurrentQuestion(question);
+    });
+
+    socket.on('wrongAnswer', (data) => {
+      setWrongAnswer({playerName: data.playerName, show: true});
     });
 
     socket.on('gameEnded', (finalScores) => {
@@ -52,6 +59,14 @@ function Player() {
 
   const quitGame = () => {
     socket.emit('quitGame');
+  }
+
+  const WrongAnswerView = ({playerName}) => {
+    return (
+        <div>
+            {playerName} your answer is incorrect
+        </div>
+    )
   }
 
   return (
@@ -98,6 +113,8 @@ function Player() {
             ))}
           </ul>
           <button onClick={submitAnswer}>Submit</button>
+
+          {wrongAnswer.show && <WrongAnswerView playerName={wrongAnswer.playerName }/>}
         </div>
       ) : (
         <h3>Waiting for the host to start the game...</h3>

@@ -49,10 +49,6 @@ function Player() {
 
       navigate("/players-summary", {replace: true});
     });
-
-    return () => {
-        socket.off('removePlayer');
-    };
   }, [socket, setPlayerId]);
 
   const submitAnswer = () => {

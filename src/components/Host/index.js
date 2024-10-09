@@ -115,6 +115,9 @@ function Host() {
       {gameStarted && (
         <button onClick={endGame}>End Game</button> // Button to end the game
       )}
+
+      {/* show this button only when game not yet started  */}
+      {!gameStarted && <button onClick={navigateToHome}>Back</button>}
     </div>
   );
 }

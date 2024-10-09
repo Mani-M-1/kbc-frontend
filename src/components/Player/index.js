@@ -33,6 +33,11 @@ function Player() {
 
       navigate("/players-summary", {replace: true});
     });
+
+    socket.on('quitGame', () => {
+
+      navigate("/players-summary", {replace: true});
+    });
   }, [socket]);
 
   const submitAnswer = () => {
@@ -43,6 +48,10 @@ function Player() {
   const navigateToHome = () => {
     setIsHost(null);
     navigate("/", {replace: true});
+  }
+
+  const quitGame = () => {
+    socket.emit('quitGame');
   }
 
   return (
@@ -64,6 +73,14 @@ function Player() {
       : 
       gameStarted && currentQuestion ? (
         <div className="game-panel">
+            <header>
+                <h3>
+                    KBC
+                </h3>
+                <button onClick={quitGame}>
+                    Quit
+                </button>
+            </header>
           <h2>{currentQuestion.question}</h2>
           <ul>
             {currentQuestion.options.map((option) => (

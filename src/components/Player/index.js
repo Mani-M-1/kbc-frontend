@@ -8,7 +8,7 @@ function Player() {
   const [gameStarted, setGameStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [selectedOption, setSelectedOption] = useState('');
-  const [wrongAnswer, setWrongAnswer] = useState({playerName: "", show: false, correctOption: ''});
+  const [wrongAnswer, setWrongAnswer] = useState({playerName: "", show: false, correctOption: '', playerId: ''});
 
 
   const { socket, setIsHost, setFinalScores, playerId, setPlayerId } = useContext(GameContext);
@@ -35,7 +35,7 @@ function Player() {
     });
 
     socket.on('wrongAnswer', (data) => {
-      setWrongAnswer({playerName: data.playerName, show: true, correctOption: data.correctOption});
+      setWrongAnswer({playerName: data.playerName, show: true, correctOption: data.correctOption, playerId: data.playerId});
     });
 
     socket.on('gameEnded', (finalScores) => {

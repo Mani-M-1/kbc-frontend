@@ -51,7 +51,7 @@ function Player() {
     });
 
     return () => {
-        socket.off('playerId'); // Cleanup listener when component unmounts
+        socket.off('removePlayer');
     };
   }, [socket, setPlayerId]);
 
@@ -68,6 +68,10 @@ function Player() {
   const quitGame = () => {
     socket.emit('quitGame');
   }
+
+//   const playerExitedFromGame = () => {
+//     socket.emit('removePlayer');
+//   }
 
   const WrongAnswerView = ({playerName, correctOption}) => {
     return (

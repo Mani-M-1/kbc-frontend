@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import Home from './components/Home';
 import Host from './components/Host';
 import Player from './components/Player';
+import PlayerSummary from './components/PlayerSummary';
 
 const socket = io('https://kbc-backend-9mww.onrender.com');
 
@@ -31,6 +32,7 @@ function App() {
           <Route path='/' element={<Home/>}/>
           <Route path='/host' element={<Host/>}/>
           <Route path='/player' element={<Player/>}/>
+          <Route path='/players-summary" ' element={<PlayerSummary/>}/>
         </Routes>
       </BrowserRouter>
     </GameContext.Provider>

@@ -5,6 +5,9 @@ import {GameContext} from "../../App";
 function PlayerSummary() {
   const { finalScores } = useContext(GameContext);
 
+  console.log("players summary page");
+  console.log(finalScores);
+
   return (
     <div className="summary-page">
       <h2>Game Summary</h2>

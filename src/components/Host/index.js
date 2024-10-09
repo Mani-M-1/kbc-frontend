@@ -13,14 +13,8 @@ function Host() {
   
   const navigate = useNavigate();
 
-  const { socket, setFinalScores, setIsHost } = useContext(GameContext);
+  const { socket, setFinalScores, setIsHost, questions } = useContext(GameContext);
   
-
-  const questions = [
-    { question: 'What is the capital of India?', options: ['A: Delhi', 'B: Mumbai', 'C: Kolkata', 'D: Chennai'] },
-    { question: 'What is the currency of Japan?', options: ['A: Yen', 'B: Dollar', 'C: Peso', 'D: Won'] },
-  ];
-
   useEffect(() => {
     socket.on('playersList', (updatedPlayers) => {
       setPlayers(updatedPlayers);

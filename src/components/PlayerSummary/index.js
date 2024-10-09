@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 
 function PlayerSummary() {
-  const { finalScores, setIsHost } = useContext(GameContext);
+  const { finalScores, setIsHost, questions } = useContext(GameContext);
 
   const navigate = useNavigate();
 
@@ -19,7 +19,7 @@ function PlayerSummary() {
       <ul>
         {finalScores.map((player, index) => (
           <li key={index}>
-            {player.name} - Score: {player.score}
+            {player.name} - Score: {player.score} / {questions.length}
           </li>
         ))}
       </ul>

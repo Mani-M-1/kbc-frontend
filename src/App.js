@@ -19,6 +19,11 @@ function App() {
 
   const [finalScores, setFinalScores] = useState([]);
 
+  const questions = [
+    { question: 'What is the capital of India?', options: ['A: Delhi', 'B: Mumbai', 'C: Kolkata', 'D: Chennai'] },
+    { question: 'What is the currency of Japan?', options: ['A: Yen', 'B: Dollar', 'C: Peso', 'D: Won'] },
+  ];
+
   // const navigate = useNavigate();
 
   // const navigateToHome = () => {
@@ -27,7 +32,7 @@ function App() {
   // }
 
   return (
-    <GameContext.Provider value={{ socket, finalScores, setFinalScores, setIsHost, isHost, playerId, setPlayerId}}>
+    <GameContext.Provider value={{ socket, finalScores, setFinalScores, setIsHost, isHost, playerId, setPlayerId, questions}}>
       <BrowserRouter>
         <Routes>
           <Route path='/' element={<Home/>}/>

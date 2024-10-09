@@ -22,8 +22,8 @@ function Player() {
   };
 
   useEffect(() => {
-    socket.on('playersList', ({playerId}) => {
-      setPlayerId({playerId});
+    socket.on('playerId', ({playerId}) => {
+      setPlayerId(playerId);
     });
 
     socket.on('gameStarted', () => {
@@ -49,7 +49,11 @@ function Player() {
 
       navigate("/players-summary", {replace: true});
     });
-  }, [socket]);
+
+    return () => {
+        socket.off('playerId'); // Cleanup listener when component unmounts
+    };
+  }, [socket, setPlayerId]);
 
   const submitAnswer = () => {
     const time = Date.now();
@@ -128,6 +132,8 @@ function Player() {
       ) : (
         <h3>Waiting for the host to start the game...</h3>
       )}
+
+      <p>playerId: {playerId === null ? 'null' : playerId}</p>
     </div>
   );
 }

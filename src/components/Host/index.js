@@ -35,7 +35,7 @@ function Host() {
 
       navigate("/players-summary", {replace: true});
     });
-  }, [socket]);
+  }, [socket, setPlayers]);
 
   const startGame = () => {
     socket.emit('startGame');

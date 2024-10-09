@@ -8,7 +8,7 @@ function Player() {
   const [gameStarted, setGameStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [selectedOption, setSelectedOption] = useState('');
-  const [wrongAnswer, setWrongAnswer] = useState({playerName: "", show: false});
+  const [wrongAnswer, setWrongAnswer] = useState({playerName: "", show: false, correctOption: ''});
 
 
   const { socket, setIsHost, setFinalScores } = useContext(GameContext);
@@ -31,7 +31,7 @@ function Player() {
     });
 
     socket.on('wrongAnswer', (data) => {
-      setWrongAnswer({playerName: data.playerName, show: true});
+      setWrongAnswer({playerName: data.playerName, show: true, correctOption: data.correctOption});
     });
 
     socket.on('gameEnded', (finalScores) => {
@@ -61,10 +61,15 @@ function Player() {
     socket.emit('quitGame');
   }
 
-  const WrongAnswerView = ({playerName}) => {
+  const WrongAnswerView = ({playerName, correctOption}) => {
     return (
         <div>
-            {playerName} your answer is incorrect
+            <p>
+                {playerName} your answer is incorrect, the corrct option is - 
+                <strong>
+                    {correctOption}
+                </strong>
+            </p>
         </div>
     )
   }

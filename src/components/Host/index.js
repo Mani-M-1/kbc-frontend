@@ -17,6 +17,7 @@ function Host() {
   
   useEffect(() => {
     socket.on('playersList', (updatedPlayers) => {
+        console.log(updatedPlayers);
       setPlayers(updatedPlayers);
     });
 

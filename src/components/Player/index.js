@@ -45,10 +45,10 @@ function Player() {
       navigate("/players-summary", {replace: true});
     });
 
-    socket.on('quitGame', () => {
+    // socket.on('disconnect', () => {
 
-      navigate("/players-summary", {replace: true});
-    });
+    // //   navigate("/players-summary", {replace: true});
+    // });
 
     return () => {
         socket.off('disconnect');
@@ -67,7 +67,7 @@ function Player() {
   }
 
   const quitGame = () => {
-    socket.emit('quitGame');
+    socket.emit('disconnect');
   }
 
 //   const playerExitedFromGame = () => {

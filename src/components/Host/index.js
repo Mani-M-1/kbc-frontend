@@ -58,7 +58,7 @@ function Host() {
       socket.emit('newQuestion', questions[currentQuestion + 1]); // Emit the next question to players
     } else {
       // Show summary after the last question
-      socket.emit('gameEnd');
+      endGame()
     }
   };
 
@@ -105,16 +105,13 @@ function Host() {
       {correctAnswer && (
         <div className="congrats-section">
           <h3>Congratulations {correctAnswer}! You answered correctly.</h3>
-          <button onClick={nextQuestion}>Next Question</button>
+          {currentQuestion < questions.length - 1 && <button onClick={nextQuestion}>Next Question</button>}
         </div>
       )}
 
       {gameStarted && (
         <button onClick={endGame}>End Game</button> // Button to end the game
       )}
-
-
-      <button onClick={navigateToHome}>Back</button>
     </div>
   );
 }

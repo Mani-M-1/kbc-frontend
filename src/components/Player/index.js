@@ -45,14 +45,13 @@ function Player() {
       navigate("/players-summary", {replace: true});
     });
 
-    // socket.on('disconnect', () => {
+    socket.on('quitGame', () => {
 
-    // //   navigate("/players-summary", {replace: true});
-    // });
+      navigate("/players-summary", {replace: true});
+    });
 
     return () => {
-        socket.off('disconnect');
-        // playerExitedFromGame();
+        socket.off('removePlayer');
     };
   }, [socket, setPlayerId]);
 
@@ -67,12 +66,8 @@ function Player() {
   }
 
   const quitGame = () => {
-    socket.emit('disconnect');
+    socket.emit('quitGame');
   }
-
-//   const playerExitedFromGame = () => {
-//     socket.emit('disconnect');
-//   }
 
   const WrongAnswerView = ({playerName, correctOption}) => {
     return (

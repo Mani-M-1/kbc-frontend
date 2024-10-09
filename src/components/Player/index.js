@@ -1,5 +1,6 @@
 import { useState, useContext, useEffect } from "react";
 import {GameContext} from "../../App";
+import { useNavigate } from "react-router-dom";
 
 function Player() {
   const [name, setName] = useState('');
@@ -7,7 +8,10 @@ function Player() {
   const [gameStarted, setGameStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [selectedOption, setSelectedOption] = useState('');
-  const { socket } = useContext(GameContext);
+  const { socket, setIsHost  } = useContext(GameContext);
+
+  const navigate = useNavigate();
+
 
   const registerPlayer = () => {
     socket.emit('register', name);
@@ -35,6 +39,11 @@ function Player() {
     socket.emit('submitAnswer', { selectedOption, time });
   };
 
+  const navigateToHome = () => {
+    setIsHost(null);
+    navigate("/", {replace: true});
+  }
+
   return (
     <div className="player">
       {!isRegistered && !gameStarted ? (
@@ -47,8 +56,12 @@ function Player() {
             onChange={(e) => setName(e.target.value)}
           />
           <button onClick={registerPlayer}>Submit</button>
+
+          <button onClick={navigateToHome}>Back</button>
         </div>
-      ) : gameStarted && currentQuestion ? (
+      ) 
+      : 
+      gameStarted && currentQuestion ? (
         <div className="game-panel">
           <h2>{currentQuestion.question}</h2>
           <ul>

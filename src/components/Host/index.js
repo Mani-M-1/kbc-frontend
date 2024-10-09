@@ -2,6 +2,7 @@ import { useState, useContext, useEffect } from "react";
 import { QRCodeSVG } from 'qrcode.react';
 
 import {GameContext} from "../../App";
+import { useNavigate } from "react-router-dom";
 
 function Host() {
   const [players, setPlayers] = useState([]);
@@ -9,8 +10,11 @@ function Host() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [correctAnswer, setCorrectAnswer] = useState(null);
   
+  
+  const navigate = useNavigate();
 
-  const { socket, setFinalScores } = useContext(GameContext);
+  const { socket, setFinalScores, setIsHost } = useContext(GameContext);
+  
 
   const questions = [
     { question: 'What is the capital of India?', options: ['A: Delhi', 'B: Mumbai', 'C: Kolkata', 'D: Chennai'] },
@@ -58,6 +62,13 @@ function Host() {
 
   const websiteLink = 'https://kbc-frontend-taupe.vercel.app';
 
+  
+
+  const navigateToHome = () => {
+    setIsHost(null);
+    navigate("/", {replace: true});
+  }
+
   return (
     <div className="host">
       <h2>Welcome to KBC</h2>
@@ -99,6 +110,9 @@ function Host() {
       {gameStarted && (
         <button onClick={endGame}>End Game</button> // Button to end the game
       )}
+
+
+      <button onClick={navigateToHome}>Back</button>
     </div>
   );
 }
